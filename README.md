@@ -1,6 +1,6 @@
 # aib-scraper
 
-Downaload balance and latest transactions from AIB's website.
+Download balance and latest transactions from AIB's website.
 
 ## Getting Started
 

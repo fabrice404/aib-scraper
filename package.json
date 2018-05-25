@@ -1,7 +1,7 @@
 {
   "name": "aib-scraper",
   "version": "1.0.1",
-  "description": "Downaload balance and transactions from AIB's website",
+  "description": "Download balance and transactions from AIB's website",
   "homepage": "https://github.com/fabrice404/aib-scraper",
   "bugs": "https://github.com/fabrice404/aib-scraper/issues",
   "license": "Apache-2.0",
