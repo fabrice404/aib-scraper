@@ -66,10 +66,10 @@ module.exports = {
       click('nextButton');
 
       // wait for warning visibility
-      await getElement('//div[contains(@class, "cmsAdvert")]');
+      // await getElement('//div[contains(@class, "cmsAdvert")]');
 
       // click continue button
-      click('nextButton');
+      // click('nextButton');
 
       // click account
       click('//dt[@class="account-nav"]');
