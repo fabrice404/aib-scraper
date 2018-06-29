@@ -77,6 +77,12 @@ module.exports = {
       // wait for account summary visibility
       await getElement('//ul[contains(@class, "summary-panel")]');
 
+      // click show more
+      click('//button[@id="showMore_button_id"]');
+
+      // wait for account summary visibility
+      await getElement('//table[contains(@class, "transaction-table")]');
+
       // balance
       const nameElement = await getContent('//div[contains(@class, "main-column-left")]/h2');
       const balanceElement = await getContent('//li[contains(@class, "bg-dark")]/em');
