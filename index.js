@@ -65,62 +65,85 @@ module.exports = {
       // click log in button
       click('nextButton');
 
-      // wait for warning visibility
-      // await getElement('//div[contains(@class, "cmsAdvert")]');
+      // list accounts
+      const accountIds = [];
+      let content = await getContent('//ul[contains(@class, "accounts-list")]');
+      let $ = cheerio.load(content);
 
-      // click continue button
-      // click('nextButton');
-
-      // click account
-      click('//dt[@class="account-nav"]');
-
-      // wait for account summary visibility
-      await getElement('//ul[contains(@class, "summary-panel")]');
-
-      // balance
-      const nameElement = await getContent('//div[contains(@class, "main-column-left")]/h2');
-      const balanceElement = await getContent('//li[contains(@class, "bg-dark")]/em');
-      const availableElement = await getContent('//li[contains(@class, "bg-light")]/em');
-
-      const account = {
-        name: nameElement.trim(),
-        balance: getAmountFromText(balanceElement),
-        available: getAmountFromText(availableElement),
-        transactions: { done: [], pending: [] },
-      };
-
-      const data = await getContent('//div[contains(@class, "norsvp")]');
-      const $ = cheerio.load(data);
-
-      $('.transaction-table').each((i, table) => {
-        const isPendingTable = $(table).find('td:contains("Balance")').length === 0;
-
-        let date;
-        $(table).find('tr').each((j, row) => {
-          if ($(row).hasClass('date-row')) {
-            date = $(row).find('.hide-td').text();
-          } else {
-            const transaction = { date };
-            if ($(row).find('.credit:not(.hide-td)').length) {
-              transaction.name = $(row).find('.forceWrap').text();
-              transaction.amount = getAmountFromText($(row).find('.credit:not(.hide-td)').text());
-            } else if ($(row).find('.debit:not(.hide-td)').length) {
-              transaction.name = $(row).find('.forceWrap').text();
-              transaction.amount = getAmountFromText($(row).find('.debit:not(.hide-td)').text());
-            }
-
-            if (transaction.amount) {
-              if (isPendingTable) {
-                account.transactions.pending.push(transaction);
-              } else {
-                account.transactions.done.push(transaction);
-              }
-            }
-          }
-        });
+      $('dt.account-name').each((i, a) => {
+        accountIds.push($(a).text().trim());
       });
 
-      result.push(account);
+      for (let index = 0; index < accountIds.length; index += 1) {
+        const id = accountIds[index];
+
+        // click account
+        click(`//dt[@class="account-name" and contains(text(), "${id}")]`);
+
+        // wait for account summary visibility
+        await getElement('//ul[contains(@class, "summary-panel")]');
+
+        // balance
+        const nameElement = await getContent('//div[contains(@class, "main-column-left")]/h2');
+        const balanceElement = await getContent('//li[contains(@class, "bg-dark")]/em');
+        const availableElement = await getContent('//li[contains(@class, "bg-light")]/em');
+
+        const account = {
+          name: nameElement.trim(),
+          balance: getAmountFromText(balanceElement),
+          available: getAmountFromText(availableElement),
+          transactions: { done: [], pending: [] },
+        };
+
+        content = await getContent('//body');
+        $ = cheerio.load(content);
+
+        if ($('#showMore_button_id').length) {
+          // click show more
+          click('//button[@id="showMore_button_id"]');
+
+          // wait for account summary visibility
+          await getElement('//ul[contains(@class, "summary-panel")]');
+
+          content = await getContent('//body');
+          $ = cheerio.load(content);
+        }
+
+        $('.transaction-table').each((i, table) => {
+          const isPendingTable = i === 0;
+
+          let date;
+          $(table).find('tr, ul').each((j, row) => {
+            if ($(row).hasClass('date-row')) {
+              date = $(row).text();
+            } else {
+              const transaction = { date };
+              if ($(row).find('.credit').length) {
+                transaction.name = $(row).find('.forceWrap').text();
+                transaction.amount = getAmountFromText($(row).find('.credit').first().text());
+              } else if ($(row).find('.debit').length) {
+                transaction.name = $(row).find('.forceWrap').text();
+                transaction.amount = getAmountFromText($(row).find('.debit').first().text());
+              }
+
+              if (transaction.amount) {
+                if (isPendingTable) {
+                  account.transactions.pending.push(transaction);
+                } else {
+                  account.transactions.done.push(transaction);
+                }
+              }
+            }
+          });
+        });
+
+        result.push(account);
+
+        // click main logo
+        click('//div[contains(@class, "navLogo")]');
+      }
+
+      await getContent('//ul[contains(@class, "accounts-list")]');
 
       if (!config.keepItOpen) {
         driver.quit();
