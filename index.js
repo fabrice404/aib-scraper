@@ -1,4 +1,5 @@
 const cheerio = require('cheerio');
+const moment = require('moment');
 const { Builder, By, until } = require('selenium-webdriver');
 
 const defaultConfig = {
@@ -29,7 +30,7 @@ module.exports = {
       await element.click();
     };
 
-    const getAmountFromText = text => parseFloat(text.replace(/[^0-9.-]/g, ''));
+    const getAmountFromText = text => (text.match(/DR/) ? -1 : 1) * parseFloat(text.replace(/[^0-9.-]/g, ''));
 
     const result = [];
 
@@ -84,9 +85,12 @@ module.exports = {
         await getElement('//ul[contains(@class, "summary-panel")]');
 
         // balance
+        const summaryElement = await getContent('//ul[contains(@class, "summary-panel")]');
+        const isSavings = !summaryElement.match(/bg-light/);
+
         const nameElement = await getContent('//div[contains(@class, "main-column-left")]/h2');
         const balanceElement = await getContent('//li[contains(@class, "bg-dark")]/em');
-        const availableElement = await getContent('//li[contains(@class, "bg-light")]/em');
+        const availableElement = await getContent(`//li[contains(@class, "bg-${isSavings ? 'dark' : 'light'}")]/em`);
 
         const account = {
           name: nameElement.trim(),
@@ -115,7 +119,11 @@ module.exports = {
           let date;
           $(table).find('tr, ul').each((j, row) => {
             if ($(row).hasClass('date-row')) {
-              date = $(row).text();
+              date = moment(
+                $(row).text().trim().split('\t')[0],
+                ['dddd, Do MMMM YY', 'DD/MM/YYYY', 'x'],
+              )
+                .format('YYYY-MM-DD');
             } else {
               const transaction = { date };
               if ($(row).find('.credit').length) {
