@@ -93,7 +93,7 @@ module.exports = {
         const availableElement = await getContent(`//li[contains(@class, "bg-${isSavings ? 'dark' : 'light'}")]/em`);
 
         const account = {
-          name: nameElement.trim(),
+          name: nameElement.split('<')[0].trim(),
           balance: getAmountFromText(balanceElement),
           available: getAmountFromText(availableElement),
           transactions: { done: [], pending: [] },
