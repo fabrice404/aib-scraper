@@ -79,7 +79,7 @@ module.exports = {
         const id = accountIds[index];
 
         // click account
-        click(`//dt[@class="account-name" and contains(text(), "${id}")]`);
+        click(`//dt[contains(@class, "account-name") and contains(text(), "${id}")]`);
 
         // wait for account summary visibility
         await getElement('//ul[contains(@class, "summary-panel")]');
