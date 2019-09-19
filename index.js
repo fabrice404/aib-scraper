@@ -62,8 +62,11 @@ module.exports = {
     await setDigit(2);
     await setDigit(3);
 
-    // click log in button
-    click('nextButton');
+    // click limited access button
+    click('limitedAccessButton');
+
+    // click continue button
+    click('ping');
 
     // list accounts
     const accountIds = [];
