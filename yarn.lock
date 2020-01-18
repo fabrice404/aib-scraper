@@ -897,8 +897,8 @@ htmlparser2@^3.9.1:
     readable-stream "^2.0.2"
 
 husky@^4.0.3:
-  version "4.0.9"
-  resolved "https://registry.yarnpkg.com/husky/-/husky-4.0.9.tgz#ded9e4f957dd8358649330da84906b6bf2e367e9"
+  version "4.0.10"
+  resolved "https://registry.yarnpkg.com/husky/-/husky-4.0.10.tgz#659b52c404d3163b943a73f6c1d454708c0226d8"
   dependencies:
     chalk "^3.0.0"
     ci-info "^2.0.0"
