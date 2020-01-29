@@ -45,6 +45,9 @@ module.exports = {
       document.getElementById('regNumber_id').value = login;
     }, config.login);
 
+    // click accept cookies
+    click('acceptCookies');
+
     // click next button
     click('nextButton');
 
