@@ -3,7 +3,7 @@ const moment = require('moment');
 const { Builder, By, until } = require('selenium-webdriver');
 
 const defaultConfig = {
-  url: 'https://onlinebanking.aib.ie/inet/roi/login.htm',
+  url: 'https://onlinebanking.aib.ie/inet/roi/login.htm?',
   browser: 'chrome',
 };
 
@@ -37,39 +37,25 @@ module.exports = {
     // navigate to url
     await driver.get(config.url);
 
-    // wait for registration number input visibility
-    await getElement('regNumber_id');
-
-    // set registration number input value
-    await driver.executeScript((login) => {
-      document.getElementById('regNumber_id').value = login;
-    }, config.login);
-
     // click accept cookies
+    await getElement('acceptCookies');
     click('acceptCookies');
 
-    // click next button
-    click('nextButton');
+    click('tab_limited_access');
 
-    // get digits to set
-    const setDigit = async (n) => {
-      const element = await getElement(`//label[@for="digit${n}Text"]/strong`);
-      const html = await element.getAttribute('innerHTML');
-      const digit = parseInt(html.replace(/Digit/i, '').trim(), 10);
+    click('limited-login');
 
-      await driver.executeScript((num, value) => {
-        document.getElementById(`digit${num}Text`).value = value;
-      }, n, config.password.charAt(digit - 1));
-    };
-    await setDigit(1);
-    await setDigit(2);
-    await setDigit(3);
+    // wait for registration number input visibility
+    await getElement('username');
 
-    // click limited access button
-    click('limitedAccessButton');
+    // set registration number input value
+    await driver.executeScript((login, password) => {
+      document.getElementById('username').value = login;
+      document.getElementById('password').value = password;
+    }, config.login, config.password);
 
-    // click continue button
-    click('ping');
+    click('//a[contains(@class, "ping-button") and contains(@class, "allow")]');
+
 
     // list accounts
     const accountIds = [];
