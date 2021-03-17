@@ -1,4 +1,5 @@
 const cheerio = require('cheerio');
+const debug = require('debug')('aib-scraper');
 const moment = require('moment');
 const { Builder, By, until } = require('selenium-webdriver');
 
@@ -38,6 +39,7 @@ module.exports = {
     await driver.get(config.url);
 
     // click accept cookies
+    debug('click accept cookies');
     await getElement('acceptCookies');
     click('acceptCookies');
 
@@ -49,6 +51,7 @@ module.exports = {
     await getElement('username');
 
     // set registration number input value
+    debug('set login details');
     await driver.executeScript((login, password) => {
       document.getElementById('username').value = login;
       document.getElementById('password').value = password;
@@ -56,21 +59,22 @@ module.exports = {
 
     click('//a[contains(@class, "ping-button") and contains(@class, "allow")]');
 
-
     // list accounts
+    debug('list account');
     const accountIds = [];
     let content = await getContent('//ul[contains(@class, "accounts-list")]');
     let $ = cheerio.load(content);
 
-    $('dt.account-name').each((i, a) => {
+    $('div.account-name').each((i, a) => {
       accountIds.push($(a).text().trim());
     });
 
     for (let index = 0; index < accountIds.length; index += 1) {
       const id = accountIds[index];
+      debug(`get account: ${id}`);
 
       // click account
-      click(`//dt[contains(@class, "account-name") and contains(text(), "${id}")]`);
+      click(`//div[contains(@class, "account-name") and contains(text(), "${id}")]`);
 
       // wait for account summary visibility
       await getElement('//ul[contains(@class, "summary-panel")]');
