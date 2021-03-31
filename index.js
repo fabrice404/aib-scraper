@@ -38,13 +38,15 @@ module.exports = {
     // navigate to url
     await driver.get(config.url);
 
-    // click accept cookies
     debug('click accept cookies');
     await getElement('acceptCookies');
     click('acceptCookies');
 
+    debug('click tab_limited_access');
+    await getElement('tab_limited_access');
     click('tab_limited_access');
 
+    debug('click limited-login');
     click('limited-login');
 
     // wait for registration number input visibility
