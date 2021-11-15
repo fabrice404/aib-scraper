@@ -141,7 +141,7 @@ module.exports = {
           } else {
             const transaction = { date };
             transaction.name = $(row).find('.transactionDesc').text();
-            transaction.amount = getAmountFromText($(row).find('.paidOut').text() + $(row).find('.piadIn').text());
+            transaction.amount = getAmountFromText($(row).find('.paidOut').text() + $(row).find('.paidIn').text());
 
             if (transaction.amount) {
               if (isPending) {
