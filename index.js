@@ -16,17 +16,20 @@ module.exports = {
       .build();
 
     const getElement = async (selector) => {
+      debug(`getElement:${selector}`);
       const by = selector.startsWith('/') ? By.xpath(selector) : By.id(selector);
       await driver.wait(until.elementLocated(by));
       return driver.wait(until.elementIsVisible(driver.findElement(by)));
     };
 
     const getContent = async (selector) => {
+      debug(`getContent:${selector}`);
       const element = await getElement(selector);
       return element.getAttribute('innerHTML');
     };
 
     const click = async (selector) => {
+      debug(`click:${selector}`);
       const element = await getElement(selector);
       await element.click();
     };
@@ -78,16 +81,30 @@ module.exports = {
       // click account
       click(`//div[contains(@class, "account-name") and contains(text(), "${id}")]`);
 
-      // wait for account summary visibility
-      await getElement('//ul[contains(@class, "summary-panel")]');
-
-      // balance
-      const summaryElement = await getContent('//ul[contains(@class, "summary-panel")]');
-      const isSavings = !summaryElement.match(/bg-light/);
+      // wait for account page visibility
+      await getElement('//div[contains(@class, "rsvp")]');
 
       const nameElement = await getContent('//div[contains(@class, "main-column-left")]/h2');
-      const balanceElement = await getContent('//li[contains(@class, "bg-dark")]/em');
-      const availableElement = await getContent(`//li[contains(@class, "bg-${isSavings ? 'dark' : 'light'}")]/em`);
+
+      // detect account type (current,savings,creditcard)
+      const mainElement = await getContent('//div[contains(@class, "rsvp")]');
+      let pageType = 'current';
+      if (mainElement.match(/summary-panel x3/gi)) {
+        pageType = 'creditcard';
+      } else if ((mainElement.match(/accountOverviewInfoLabel/gi) || []).length === 1) {
+        pageType = 'savings';
+      }
+
+      // balance
+      let balanceElement;
+      let availableElement;
+      if (pageType === 'creditcard') {
+        balanceElement = await getContent('//ul[contains(@class, "summary-panel")]/li[2]/em');
+        availableElement = await getContent('//ul[contains(@class, "summary-panel")]/li[1]/em');
+      } else {
+        balanceElement = await getContent('//div[@class="accountOverviewInfo"][1]/span[2]');
+        availableElement = pageType === 'current' ? await getContent('//div[@class="accountOverviewInfo"][2]/span[2]') : balanceElement;
+      }
 
       const account = {
         name: nameElement.split('<')[0].trim(),
@@ -110,12 +127,12 @@ module.exports = {
         $ = cheerio.load(content);
       }
 
-      $('.transaction-table').each((i, table) => {
-        const isPendingTable = i === 0;
+      $('.transactionsListItems').each((i, section) => {
+        const isPending = i === 0;
 
         let date;
-        $(table).find('tr, ul').each((j, row) => {
-          if ($(row).hasClass('date-row')) {
+        $(section).find('div').each((j, row) => {
+          if ($(row).hasClass('transactionsDate')) {
             date = moment(
               $(row).text().trim().split('\t')[0],
               ['dddd, Do MMMM YY', 'DD/MM/YYYY', 'x'],
@@ -123,16 +140,11 @@ module.exports = {
               .format('YYYY-MM-DD');
           } else {
             const transaction = { date };
-            if ($(row).find('.credit').length) {
-              transaction.name = $(row).find('.forceWrap').text();
-              transaction.amount = getAmountFromText($(row).find('.credit').first().text());
-            } else if ($(row).find('.debit').length) {
-              transaction.name = $(row).find('.forceWrap').text();
-              transaction.amount = getAmountFromText($(row).find('.debit').first().text());
-            }
+            transaction.name = $(row).find('.transactionDesc').text();
+            transaction.amount = getAmountFromText($(row).find('.paidOut').text() + $(row).find('.piadIn').text());
 
             if (transaction.amount) {
-              if (isPendingTable) {
+              if (isPending) {
                 account.transactions.pending.push(transaction);
               } else {
                 account.transactions.done.push(transaction);
