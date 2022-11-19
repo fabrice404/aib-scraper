@@ -2,6 +2,7 @@ const cheerio = require('cheerio');
 const debug = require('debug')('aib-scraper');
 const moment = require('moment');
 const { Builder, By, until } = require('selenium-webdriver');
+const chrome = require('selenium-webdriver/chrome');
 
 const defaultConfig = {
   url: 'https://onlinebanking.aib.ie/inet/roi/login.htm?',
@@ -13,6 +14,7 @@ module.exports = {
     const config = Object.assign(defaultConfig, _config);
     const driver = new Builder()
       .forBrowser(config.browser)
+      .setChromeOptions(new chrome.Options().headless().windowSize({ width: 1000, height: 400 }))
       .build();
 
     const getElement = async (selector) => {
@@ -41,9 +43,9 @@ module.exports = {
     // navigate to url
     await driver.get(config.url);
 
-    debug('click accept cookies');
-    await getElement('acceptCookies');
-    click('acceptCookies');
+    // debug('click accept cookies');
+    // await getElement('acceptCookies');
+    // click('acceptCookies');
 
     debug('click tab_limited_access');
     await getElement('tab_limited_access');
@@ -79,7 +81,7 @@ module.exports = {
       debug(`get account: ${id}`);
 
       // click account
-      click(`//div[contains(@class, "account-name") and contains(text(), "${id}")]`);
+      await click(`//div[contains(@class, "account-name") and contains(text(), "${id}")]`);
 
       // wait for account page visibility
       await getElement('//div[contains(@class, "rsvp")]');
@@ -91,19 +93,21 @@ module.exports = {
       let pageType = 'current';
       if (mainElement.match(/summary-panel x3/gi)) {
         pageType = 'creditcard';
-      } else if ((mainElement.match(/accountOverviewInfoLabel/gi) || []).length === 1) {
+      } else if ((mainElement.match(/summary-panel x1/gi) || []).length === 1) {
         pageType = 'savings';
       }
+
+      debug(`Page type: ${pageType}`);
 
       // balance
       let balanceElement;
       let availableElement;
-      if (pageType === 'creditcard') {
+      if (pageType === 'creditcard' || pageType === 'current') {
         balanceElement = await getContent('//ul[contains(@class, "summary-panel")]/li[2]/em');
         availableElement = await getContent('//ul[contains(@class, "summary-panel")]/li[1]/em');
       } else {
-        balanceElement = await getContent('//div[@class="accountOverviewInfo"][1]/span[2]');
-        availableElement = pageType === 'current' ? await getContent('//div[@class="accountOverviewInfo"][2]/span[2]') : balanceElement;
+        balanceElement = await getContent('//ul[contains(@class, "summary-panel")]/li[1]/em');
+        availableElement = await getContent('//ul[contains(@class, "summary-panel")]/li[1]/em');
       }
 
       const account = {
@@ -127,12 +131,12 @@ module.exports = {
         $ = cheerio.load(content);
       }
 
-      $('.transactionsListItems').each((i, section) => {
-        const isPending = i === 0;
+      $('.transaction-table').each((i, table) => {
+        const isPendingTable = i === 0;
 
         let date;
-        $(section).find('div').each((j, row) => {
-          if ($(row).hasClass('transactionsDate')) {
+        $(table).find('tr, ul').each((j, row) => {
+          if ($(row).hasClass('date-row')) {
             date = moment(
               $(row).text().trim().split('\t')[0],
               ['dddd, Do MMMM YY', 'DD/MM/YYYY', 'x'],
@@ -140,11 +144,16 @@ module.exports = {
               .format('YYYY-MM-DD');
           } else {
             const transaction = { date };
-            transaction.name = $(row).find('.transactionDesc').text();
-            transaction.amount = getAmountFromText($(row).find('.paidOut').text() + $(row).find('.paidIn').text());
+            if ($(row).find('.credit').length) {
+              transaction.name = $(row).find('.forceWrap').text();
+              transaction.amount = getAmountFromText($(row).find('.credit').first().text());
+            } else if ($(row).find('.debit').length) {
+              transaction.name = $(row).find('.forceWrap').text();
+              transaction.amount = getAmountFromText($(row).find('.debit').first().text());
+            }
 
             if (transaction.amount) {
-              if (isPending) {
+              if (isPendingTable) {
                 account.transactions.pending.push(transaction);
               } else {
                 account.transactions.done.push(transaction);
