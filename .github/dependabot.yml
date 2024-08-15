@@ -1,9 +1,4 @@
 version: 2
-registries:
-  npm-registry-npm-fontawesome-com:
-    type: npm-registry
-    url: https://npm.fontawesome.com
-    token: "${{secrets.NPM_REGISTRY_NPM_FONTAWESOME_COM_TOKEN}}"
 
 updates:
 - package-ecosystem: npm
@@ -17,15 +12,3 @@ updates:
   - fabrice404
   assignees:
   - fabrice404
-  ignore:
-  - dependency-name: eslint
-    versions:
-    - 7.21.0
-  - dependency-name: husky
-    versions:
-    - 5.1.1
-  - dependency-name: selenium-webdriver
-    versions:
-    - 4.0.0-beta.1
-  registries:
-  - npm-registry-npm-fontawesome-com
