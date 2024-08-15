@@ -4,10 +4,6 @@ Download balance and latest transactions from AIB's website.
 
 ## Getting Started
 
-### Prerequisites
-
-To run this module, you will need to download the latest chrome driver [here](http://chromedriver.storage.googleapis.com/index.html).
-
 ### Usage
 
 ```javascript
@@ -21,8 +17,8 @@ const result = await aib.get({
 
 ## Built With
 
-*   [Selenium](https://www.npmjs.com/package/selenium-webdriver): browser automation library
-*   [Cheerio](https://www.npmjs.com/package/cheerio): jQuery implementation in Node.js
+* [Puppeteer](https://www.npmjs.com/package/puppeteer): browser automation library
+* [Cheerio](https://www.npmjs.com/package/cheerio): jQuery implementation in Node.js
 
 ## License
 
