@@ -75,7 +75,7 @@ const get = async (_config) => {
     const account = {
       name: nameContent.split("<")[0].trim(),
       balance: getAmountFromText(balanceContent),
-      availableContent: getAmountFromText(availableContent),
+      available: getAmountFromText(availableContent),
       transactions: { done: [], pending: [] },
     };
 
