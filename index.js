@@ -125,6 +125,33 @@ const get = async (_config) => {
       });
     });
 
+    $(".transactionsListItems").each((i, section) => {
+      const isPending = i === 0;
+
+      let date;
+      $(section).find("div").each((j, row) => {
+        if ($(row).hasClass("transactionsDate")) {
+          date = moment(
+            $(row).text().trim().split("\t")[0],
+            ["dddd, Do MMMM YY", "DD/MM/YYYY", "x"],
+          )
+            .format("YYYY-MM-DD");
+        } else {
+          const transaction = { date };
+          transaction.name = $(row).find(".transactionDesc").text();
+          transaction.amount = getAmountFromText($(row).find(".paidOut.r-hide").text() + $(row).find(".paidIn.r-hide").text());
+
+          if (transaction.amount) {
+            if (isPending) {
+              account.transactions.pending.push(transaction);
+            } else {
+              account.transactions.done.push(transaction);
+            }
+          }
+        }
+      });
+    });
+
     result.push(account);
     await page.locator("div.navLogo").click();
   }
