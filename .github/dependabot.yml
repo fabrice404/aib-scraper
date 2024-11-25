@@ -10,7 +10,6 @@ updates:
     include: "scope"
   groups:
     dependencies-patch-and-minor:
-      dependency-type: development
       update-types:
         - minor
         - patch
